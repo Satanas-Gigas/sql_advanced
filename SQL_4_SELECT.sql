@@ -1,7 +1,8 @@
 --Количество исполнителей в каждом жанре.
+ --ИСПРАВЛЕНО
 SELECT name, COUNT(*) 
   FROM genre AS g
-	   JOIN genre_singer AS gs 
+  LEFT JOIN genre_singer AS gs 
 	     ON g.id = gs.genre_id
  GROUP BY name
  ORDER BY COUNT(*);
@@ -21,14 +22,19 @@ SELECT a.name, AVG(time)
  GROUP BY a.name;
 
 --Все исполнители, которые не выпустили альбомы в 2020 году.
-SELECT s.name 
-  FROM singer_album AS a_s
-       JOIN album AS a 
-         ON a_s.album_id = a.id
-       JOIN singer AS s 
-         ON a_s.singer_id = s.id
- WHERE year != 2020
- GROUP BY s.name;
+--ИСПРАВЛЕНО
+
+SELECT DISTINCT s.name 
+  FROM singer AS s
+WHERE s.name NOT IN
+(SELECT DISTINCT s.name AS s FROM singer
+	 JOIN singer_album AS sa 
+	   ON s.id = sa.singer_id  
+	 JOIN album AS a 
+	   ON sa.album_id = a.id
+WHERE a.year = 2020)
+ORDER BY s.name;
+
 
 --Названия сборников, в которых присутствует конкретный исполнитель Slipknot.
 SELECT c.name 
@@ -45,6 +51,7 @@ SELECT c.name
  GROUP BY c.name
  
 --Названия альбомов, в которых присутствуют исполнители более чем одного жанра.
+ --иСПРАВЛЕНО
  SELECT DISTINCT a.name 
   FROM album AS a  
        JOIN singer_album AS sa  
@@ -53,8 +60,23 @@ SELECT c.name
        ON sa.album_id  = s.id  
        JOIN genre_singer AS gs  
        ON gs.singer_id  = s.id  
- GROUP BY a.name
+ GROUP BY a.name, gs.singer_id
 HAVING COUNT(gs.genre_id) > 1; 
+
+
+-- название альбомов, в которых присутствуют исполнители более 1 жанра
+
+ SELECT DISTINCT a.name 
+  FROM album AS a  
+       JOIN singer_album AS sa   
+       ON a.id  = sa.singer_id  
+       JOIN singer AS s        
+       ON sa.album_id  = s.id  
+       JOIN genre_singer AS g  
+       ON g.singer_id  = s.id  
+ GROUP BY a.name, g.singer_id  
+HAVING COUNT(g.genre_id) > 1; 
+
 
 --Наименования треков, которые не входят в сборники.
 SELECT t.name 
